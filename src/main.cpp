@@ -88,6 +88,34 @@ private:
         std::complex<double> beta;  // amplitude for |1>
 };
 
+class TwoQubit{
+
+public:
+    TwoQubit(){
+        this->alpha = std::complex<double>(1.0, 0.0); 
+        this->beta = std::complex<double>(0.0, 0.0);
+        this->gamma = std::complex<double>(0.0, 0.0); 
+        this->delta = std::complex<double>(0.0,0.0);
+    }
+
+    bool isNormalized(){
+        double NormalizationCheck = std::norm(alpha) + std::norm(beta) + std::norm(gamma) + std::norm(delta);
+        return (std::abs(NormalizationCheck - 1.0) < 1e-10); // checks if the sum of squared
+    }
+
+    void printState(){
+        std::cout << "TwoQubit state: " << alpha << "|00> + " << beta << "|01> + " << gamma << "|10> + " << delta << "|11>"<< std::endl;
+        std::cout << "isNormalized: " << (isNormalized() ? "Yes" : "No") << std::endl;
+    }
+
+
+private:
+    std::complex<double> alpha;
+    std::complex<double> beta;
+    std::complex<double> gamma;
+    std::complex<double>delta;
+};
+
 int main(){
     const double amplitude = 1.0 / std::sqrt(2.0);
     //Qubit q{
