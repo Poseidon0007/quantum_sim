@@ -46,6 +46,18 @@ public:
         std::swap(alpha, beta); // swap the amplitudes for |0> and |1>
     }
 
+    void applyy(){
+        auto temp = alpha;
+        auto i = std::complex<double>{0.0, 1.0};
+        alpha=-i*beta;
+        beta = i*temp;
+    }
+
+    void applyz(){
+        beta=-beta;
+    }
+
+
     //a hadamard gate is a single qubit operation that creates superposition. 
     // It transforms the basis states |0> and |1> into equal superpositions of both states. 
     void applyhadamard(){
@@ -76,6 +88,46 @@ private:
         std::complex<double> beta;  // amplitude for |1>
 };
 
+class TwoQubit{
+
+public:
+    TwoQubit(){
+        this->alpha = std::complex<double>(1.0, 0.0); 
+        this->beta = std::complex<double>(0.0, 0.0);
+        this->gamma = std::complex<double>(0.0, 0.0); 
+        this->delta = std::complex<double>(0.0,0.0);
+    }
+
+    void applyHadamardToFirst(){
+        const auto new_alpha = (alpha + gamma) / std::sqrt(2.0);
+        const auto new_beta = (beta + delta) / std::sqrt(2.0);
+        const auto new_gamma = (alpha - gamma) / std::sqrt(2.0);
+        const auto new_delta = (beta - delta) / std::sqrt(2.0);
+
+        alpha = new_alpha;
+        beta = new_beta;
+        gamma = new_gamma;
+        delta = new_delta;
+    }
+
+    bool isNormalized(){
+        double NormalizationCheck = std::norm(alpha) + std::norm(beta) + std::norm(gamma) + std::norm(delta);
+        return (std::abs(NormalizationCheck - 1.0) < 1e-10); // checks if the sum of squared
+    }
+
+    void printState(){
+        std::cout << "TwoQubit state: " << alpha << "|00> + " << beta << "|01> + " << gamma << "|10> + " << delta << "|11>"<< std::endl;
+        std::cout << "isNormalized: " << (isNormalized() ? "Yes" : "No") << std::endl;
+    }
+
+
+private:
+    std::complex<double> alpha;
+    std::complex<double> beta;
+    std::complex<double> gamma;
+    std::complex<double>delta;
+};
+
 int main(){
     const double amplitude = 1.0 / std::sqrt(2.0);
     //Qubit q{
@@ -83,20 +135,23 @@ int main(){
     //std::complex<double>{amplitude, 0.0}
 //};
 
+    TwoQubit q;
+    q.applyHadamardToFirst();
+    q.printState();
     
-    std::mt19937 engine{std::random_device{}()};
-    int zero_count=0;
-    int one_count=0;
-    for(int i=0;i<1000;i++){
-        Qubit q{std::complex<double>{1.0, 0.0}, std::complex<double>{0.0, 0.0}};
-        q.applyhadamard(); 
-        int result=q.measure(engine);
-        if(result){
-            one_count++;
-        }
-        else{
-            zero_count++;
-        }
-    }
-    std::cout<<zero_count<<" "<<one_count<<std::endl;
+    // std::mt19937 engine{std::random_device{}()};
+    // int zero_count=0;
+    // int one_count=0;
+    // for(int i=0;i<1000;i++){
+    //     Qubit q{std::complex<double>{1.0, 0.0}, std::complex<double>{0.0, 0.0}};
+    //     q.applyhadamard(); 
+    //     int result=q.measure(engine);
+    //     if(result){
+    //         one_count++;
+    //     }
+    //     else{
+    //         zero_count++;
+    //     }
+    // }
+    // std::cout<<zero_count<<" "<<one_count<<std::endl;
 }
