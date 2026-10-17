@@ -98,6 +98,18 @@ public:
         this->delta = std::complex<double>(0.0,0.0);
     }
 
+    void applyHadamardToFirst(){
+        const auto new_alpha = (alpha + gamma) / std::sqrt(2.0);
+        const auto new_beta = (beta + delta) / std::sqrt(2.0);
+        const auto new_gamma = (alpha - gamma) / std::sqrt(2.0);
+        const auto new_delta = (beta - delta) / std::sqrt(2.0);
+
+        alpha = new_alpha;
+        beta = new_beta;
+        gamma = new_gamma;
+        delta = new_delta;
+    }
+
     bool isNormalized(){
         double NormalizationCheck = std::norm(alpha) + std::norm(beta) + std::norm(gamma) + std::norm(delta);
         return (std::abs(NormalizationCheck - 1.0) < 1e-10); // checks if the sum of squared
@@ -123,9 +135,8 @@ int main(){
     //std::complex<double>{amplitude, 0.0}
 //};
 
-    Qubit q;
-    q.applyy();
-    q.applyy();
+    TwoQubit q;
+    q.applyHadamardToFirst();
     q.printState();
     
     // std::mt19937 engine{std::random_device{}()};
