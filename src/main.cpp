@@ -110,6 +110,54 @@ public:
         delta = new_delta;
     }
 
+    void applyHadamardToSecond(){
+        const auto new_alpha = (alpha + beta) / std::sqrt(2.0);
+        const auto new_beta = (alpha - beta) / std::sqrt(2.0);
+        const auto new_gamma = (gamma + delta) / std::sqrt(2.0);
+        const auto new_delta = (gamma - delta) / std::sqrt(2.0);
+
+        alpha = new_alpha;
+        beta = new_beta;
+        gamma = new_gamma;
+        delta = new_delta;
+    }
+
+    //CNOT swaps gamma and delta
+    void applyCNOTWithFirstAsControl(){
+        std::swap(gamma,delta);
+    }
+
+    void applyCNOTWithSecondAsControl(){
+        std::swap(beta,delta);
+    }
+
+    int measure(std::mt19937& engine){
+        const double random = std::uniform_real_distribution<double>(0.0, 1.0)(engine);
+        const double probability00 = std::norm(alpha);
+        const double probability01 = std::norm(beta);
+        const double probability10 = std::norm(gamma);
+
+        if(random < probability00){
+            alpha = {1.0, 0.0};
+            beta = gamma = delta = {0.0, 0.0};
+            return 0;
+        }
+        if(random < probability00 + probability01){
+            beta = {1.0, 0.0};
+            alpha = gamma = delta = {0.0, 0.0};
+            return 1;
+        }
+        if(random < probability00 + probability01 + probability10){
+            gamma = {1.0, 0.0};
+            alpha = beta = delta = {0.0, 0.0};
+            return 2;
+        }
+
+        delta = {1.0, 0.0};
+        alpha = beta = gamma = {0.0, 0.0};
+        return 3;
+    }
+
     bool isNormalized(){
         double NormalizationCheck = std::norm(alpha) + std::norm(beta) + std::norm(gamma) + std::norm(delta);
         return (std::abs(NormalizationCheck - 1.0) < 1e-10); // checks if the sum of squared
@@ -117,6 +165,10 @@ public:
 
     void printState(){
         std::cout << "TwoQubit state: " << alpha << "|00> + " << beta << "|01> + " << gamma << "|10> + " << delta << "|11>"<< std::endl;
+        std::cout << "Probability of |00>: " << std::norm(alpha) << std::endl;
+        std::cout << "Probability of |01>: " << std::norm(beta) << std::endl;
+        std::cout << "Probability of |10>: " <<std::norm(gamma) << std::endl;
+        std::cout << "Probability of |11>: " <<std::norm(delta) << std::endl;
         std::cout << "isNormalized: " << (isNormalized() ? "Yes" : "No") << std::endl;
     }
 
@@ -136,7 +188,15 @@ int main(){
 //};
 
     TwoQubit q;
-    q.applyHadamardToFirst();
+    q.applyHadamardToSecond();
+    q.applyCNOTWithSecondAsControl();
+    std::cout << "Before measurement:\n";
+    q.printState();
+
+    std::mt19937 engine{std::random_device{}()};
+    const int result = q.measure(engine);
+    std::cout << "Measurement result: |" << result / 2 << result % 2 << ">\n";
+    std::cout << "After measurement:\n";
     q.printState();
     
     // std::mt19937 engine{std::random_device{}()};
