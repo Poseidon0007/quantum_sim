@@ -3,6 +3,11 @@
 #include <cmath>
 #include <utility> 
 #include <random>
+#include <vector>
+#include <string>
+
+enum class SingleQubitGate { X, Y, Z, H };
+enum class TwoQubitGate { HFirst, HSecond, CnotFirstControl, CnotSecondControl };
 
 //lets create a qubit 
 //a qubit has two complex amplitudes, alpha and beta, which represent the probability amplitudes for the states |0> and |1> respectively. 
@@ -180,38 +185,149 @@ private:
     std::complex<double>delta;
 };
 
+class execution{
+private:
+Qubit q;
+TwoQubit tq;
+std::vector<SingleQubitGate> SGate;
+std::vector<TwoQubitGate> TGate;
+public:
+void prepare_single_qubit_gate_list(){
+    std::cout << "Enter single-qubit gates in order (X, Y, Z, H). Enter N to finish.\n";
+    bool add_gates=true;
+    while(add_gates){
+        char gate;
+        if (!(std::cin >> gate)) {
+            std::cout << "Input ended before the gate list was complete.\n";
+            return;
+        }
+        switch(gate){
+            case 'X':
+                SGate.push_back(SingleQubitGate::X);
+                break;
+            case 'Y':
+                SGate.push_back(SingleQubitGate::Y);
+                break;
+            case 'Z':
+                SGate.push_back(SingleQubitGate::Z);
+                break;
+            case 'H':
+                SGate.push_back(SingleQubitGate::H);
+                break;
+            case 'N':
+                add_gates=false;
+                break;
+            default:
+                std::cout << "Unknown gate '" << gate << "'. Enter X, Y, Z, H, or N.\n";
+                break;
+        }
+
+    }
+}
+
+void prepare_two_qubit_gate_list(){
+    std::cout << "Enter two-qubit gates in order:\n"
+              << "HF = H on first qubit, HS = H on second qubit\n"
+              << "CF = CNOT with first qubit as control, "
+                 "CS = CNOT with second qubit as control\n"
+              << "Enter N to finish.\n";
+    bool add_gates=true;
+    while(add_gates){
+        std::string gate;
+        if (!(std::cin >> gate)) {
+            std::cout << "Input ended before the gate list was complete.\n";
+            return;
+        }
+        if (gate == "HF") {
+        TGate.push_back(TwoQubitGate::HFirst);
+        } else if (gate == "HS") {
+        TGate.push_back(TwoQubitGate::HSecond);
+        } else if (gate == "CF") {
+        TGate.push_back(TwoQubitGate::CnotFirstControl);
+        } else if (gate == "CS") {
+        TGate.push_back(TwoQubitGate::CnotSecondControl);
+        } else if (gate == "N") {
+        add_gates = false;
+        } else {
+        std::cout << "Unknown gate '" << gate << "'. Enter HF, HS, CF, CS, or N.\n";
+        }
+    }
+
+}
+
+void execute_qubit_gates(){
+    if(SGate.empty()){
+        return;
+    }
+    for(auto x:SGate){
+        switch(x){
+            case SingleQubitGate::H:
+            q.applyhadamard();
+            break;
+            case SingleQubitGate::X:
+            q.applyx();
+            break;
+            case SingleQubitGate::Y:
+            q.applyy();
+            break;
+            case SingleQubitGate::Z:
+            q.applyz();
+            break;
+        }
+    }
+}
+
+void execute_twoqubit_gates(){
+    if(TGate.empty()){
+        return;
+    }
+    for(auto x:TGate){
+        switch(x){
+            case TwoQubitGate::HFirst:
+            tq.applyHadamardToFirst();
+            break;
+            case TwoQubitGate::HSecond:
+            tq.applyHadamardToSecond();
+            break;
+            case TwoQubitGate::CnotFirstControl:
+            tq.applyCNOTWithFirstAsControl();
+            break;
+            case TwoQubitGate::CnotSecondControl:
+            tq.applyCNOTWithSecondAsControl();
+            break;
+        }
+    }
+}
+void print_single_qubit(){
+    q.printState();
+}
+
+void print_two_qubit(){
+    tq.printState();
+}
+};
+
 int main(){
-    const double amplitude = 1.0 / std::sqrt(2.0);
-    //Qubit q{
-    //std::complex<double>{amplitude, 0.0},
-    //std::complex<double>{amplitude, 0.0}
-//};
-
-    TwoQubit q;
-    q.applyHadamardToSecond();
-    q.applyCNOTWithSecondAsControl();
-    std::cout << "Before measurement:\n";
-    q.printState();
-
-    std::mt19937 engine{std::random_device{}()};
-    const int result = q.measure(engine);
-    std::cout << "Measurement result: |" << result / 2 << result % 2 << ">\n";
-    std::cout << "After measurement:\n";
-    q.printState();
-    
-    // std::mt19937 engine{std::random_device{}()};
-    // int zero_count=0;
-    // int one_count=0;
-    // for(int i=0;i<1000;i++){
-    //     Qubit q{std::complex<double>{1.0, 0.0}, std::complex<double>{0.0, 0.0}};
-    //     q.applyhadamard(); 
-    //     int result=q.measure(engine);
-    //     if(result){
-    //         one_count++;
-    //     }
-    //     else{
-    //         zero_count++;
-    //     }
-    // }
-    // std::cout<<zero_count<<" "<<one_count<<std::endl;
+    std::cout << "Choose simulator mode: 1 for one qubit, 2 for two qubits.\n";
+    int mode;
+    if (!(std::cin >> mode)) {
+        std::cerr << "Invalid input. Enter 1 or 2.\n";
+        return 1;
+    }
+    execution instance;
+    switch(mode){
+        case 1:
+          instance.prepare_single_qubit_gate_list();
+          instance.execute_qubit_gates();
+          instance.print_single_qubit();
+          break;
+        case 2:
+          instance.prepare_two_qubit_gate_list();
+          instance.execute_twoqubit_gates();
+          instance.print_two_qubit();
+          break;
+        default:
+          std::cerr << "Unknown mode. Enter 1 or 2.\n";
+          return 1;
+        }
 }
